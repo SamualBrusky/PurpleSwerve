@@ -36,7 +36,6 @@ public class Robot extends LoggedRobot {
     // AdvantageKit Logging
     BatteryTracker batteryTracker = new BatteryTracker(BatteryTracker.initializeHardware());
     Logger.recordMetadata("ProjectName", "PurpleSwerve");
-    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
     Logger.recordMetadata("BatteryName", batteryTracker.scanBattery());
 
     // Set pathfinding algorithm to be AdvantageKit compatible
