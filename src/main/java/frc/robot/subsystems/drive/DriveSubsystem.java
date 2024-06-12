@@ -63,7 +63,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.subsystems.vision.VisionSubsystem;
 
 public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
   public static class Hardware {
@@ -275,7 +274,6 @@ public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
     });
 
     // Set VisionSubsystem pose supplier for simulation
-    VisionSubsystem.getInstance().setPoseSupplier(this::getPose);
   }
 
   /**
@@ -289,7 +287,7 @@ public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
       MAXSwerveModule.initializeHardware(
         Constants.DriveHardware.LEFT_FRONT_DRIVE_MOTOR_ID,
         Constants.DriveHardware.LEFT_FRONT_ROTATE_MOTOR_ID,
-        MotorKind.NEO_VORTEX
+        MotorKind.NEO
       ),
       MAXSwerveModule.ModuleLocation.LeftFront,
       Constants.Drive.GEAR_RATIO,
@@ -305,7 +303,7 @@ public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
       MAXSwerveModule.initializeHardware(
         Constants.DriveHardware.RIGHT_FRONT_DRIVE_MOTOR_ID,
         Constants.DriveHardware.RIGHT_FRONT_ROTATE_MOTOR_ID,
-        MotorKind.NEO_VORTEX
+        MotorKind.NEO
       ),
       MAXSwerveModule.ModuleLocation.RightFront,
       Constants.Drive.GEAR_RATIO,
@@ -321,7 +319,7 @@ public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
       MAXSwerveModule.initializeHardware(
         Constants.DriveHardware.LEFT_REAR_DRIVE_MOTOR_ID,
         Constants.DriveHardware.LEFT_REAR_ROTATE_MOTOR_ID,
-        MotorKind.NEO_VORTEX
+        MotorKind.NEO
       ),
       MAXSwerveModule.ModuleLocation.LeftRear,
       Constants.Drive.GEAR_RATIO,
@@ -337,7 +335,7 @@ public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
       MAXSwerveModule.initializeHardware(
         Constants.DriveHardware.RIGHT_REAR_DRIVE_MOTOR_ID,
         Constants.DriveHardware.RIGHT_REAR_ROTATE_MOTOR_ID,
-        MotorKind.NEO_VORTEX
+        MotorKind.NEO
       ),
       MAXSwerveModule.ModuleLocation.RightRear,
       Constants.Drive.GEAR_RATIO,
@@ -481,21 +479,7 @@ public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
     m_currentHeading = new Rotation2d(getPose().getX() - m_previousPose.getX(), getPose().getY() - m_previousPose.getY());
 
     // Get estimated poses from VisionSubsystem
-    var apriltagCameraResults = VisionSubsystem.getInstance().getEstimatedGlobalPoses();
-
-    // Exit if no valid vision pose estimates
-    if (apriltagCameraResults.isEmpty()) return;
-
-    // Add vision measurements to pose estimator
-    for (var result : apriltagCameraResults) {
-      //if (result.estimatedPose.toPose2d().getTranslation().getDistance(m_previousPose.getTranslation()) > 1.0) continue;
-      m_poseEstimator.addVisionMeasurement(
-        result.estimatedRobotPose.estimatedPose.toPose2d(),
-        result.estimatedRobotPose.timestampSeconds,
-        result.visionMeasurementStdDevs
-      );
     }
-  }
 
   /**
    * Log DriveSubsystem outputs
@@ -780,25 +764,6 @@ public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
     );
   }
 
-  /**
-   * Reset current pose to vision estimate
-   */
-  private void resetPoseToVision() {
-    // Get vision estimated poses
-    var visionEstimatedRobotPoses = VisionSubsystem.getInstance().getEstimatedGlobalPoses();
-
-    // Exit if no valid vision pose estimates
-    if (visionEstimatedRobotPoses.isEmpty()) return;
-
-    // Add vision measurements to pose estimator
-    for (var visionEstimatedRobotPose : visionEstimatedRobotPoses) {
-      m_poseEstimator.resetPosition(
-        getRotation2d(),
-        getModulePositions(),
-        visionEstimatedRobotPose.estimatedRobotPose.estimatedPose.toPose2d()
-      );
-    }
-  }
 
   @Override
   public void periodic() {
@@ -1055,14 +1020,6 @@ public class DriveSubsystem extends SubsystemBase implements AutoCloseable {
    */
   public Command resetPoseCommand(Supplier<Pose2d> poseSupplier) {
     return runOnce(() -> resetPose(poseSupplier.get()));
-  }
-
-  /**
-   * Reset pose estimator to vision estimated pose
-   * @return Command to reset pose to current vision estimated pose
-   */
-  public Command resetPoseToVisionCommand() {
-    return runOnce(() -> resetPoseToVision());
   }
 
   /**
